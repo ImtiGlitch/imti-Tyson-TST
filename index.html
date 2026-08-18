@@ -290,7 +290,7 @@
         // console.log("No auth code found, redirecting to authentication");
         const clientId = "386c3e35-2a29-4051-bb0b-989df2ac229a";
         const redirectUri = "https://form-tyson.cloudapper.com/app_files/shift-timing-adjustment-tst-org-template.html";
-        const authUrl = `https://tysonsharedsvcs-tst.npr.mykronos.com/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+        const authUrl = `https://welcome-test-us.ukg.net/authorize?audience=https://usersuite.ukg.net/login&organization=org_5N2ei7PluGWfV0Av&response_type=code&&client_id=${clientId}&state=ECHO&scope=openid%20profile%20email%20access%3Awfm%20offline_access%20read%3Auserinfo&&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
         // console.log("Redirecting to:", authUrl);
         window.location.href = authUrl;
