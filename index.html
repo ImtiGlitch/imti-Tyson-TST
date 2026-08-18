@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <title>Adjustment Form with Multi-Select</title>
+
+  <!-- Google Font: Roboto -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
+  <!-- jQuery with integrity check and fallback -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+          integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+          crossorigin="anonymous"></script>
+  <script>
+    // Fallback if jQuery doesn't load from CDN
+    if (typeof jQuery === 'undefined') {
+      document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"><\/script>');
+    }
+  </script>
+  <style>
+    body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; }
+    .container { padding: 0.5rem; max-width: 100%; margin: 0; }
+    .section { border: none; border-radius: .5rem; margin-bottom: 0.5rem; background: #fff; box-shadow: none; }
+    .section-header { background: #50727b; color: #fff; font-weight: 600; padding: .65rem .9rem; border-bottom: 1px solid #40555c; }
+    .section-body { padding: 0 0.25rem; }
+    .scroll-table { max-height: 240px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: .5rem; }
+    .confirmation-screen, #responseScreen { display: none; padding: 0.25rem; border: none; }
+    #responseScreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: white; z-index: 1000; }
+    ul.selected-list { list-style-type: disc; padding-left: 20px; }
+    .custom-btn-color { background: #005151; padding: 6px 10px; width: 200px; border-radius: 50px; color: #fff; font-size: 16px; }
+    #adjustmentSection { max-width: 290px; }
+    #adjustmentSection label.form-label { color: #005151 !important; font-size: 13.5px; font-weight: 600; }
+    #adjustmentSection .form-check-input:checked { background-color: #005151; border-color: #005151; }
+    #adjustmentSection label.form-check-label { font-size: 16px; font-weight: 600; color: #005151; padding-top: 8px; margin-left: 5px; }
+    #adjustmentSection .form-check-input:focus { border-color: #86b7fe; outline: 0; box-shadow: 0 0 0 .25rem rgba(13,110,253,.25); }
+    button#btnSubmit:hover, button#btnSubmit:focus-visible { background: #fff; color: #005151; border: 1px solid #005151; font-weight: 600; }
+    .scroll-table .table>thead.table-light { display: none; }
+    #multiSelectTableBody td { font-size: 14px; }
+    .error-message { color: #dc3545; font-size: 14px; margin-top: 5px; }
+    .error-field { border-color: #dc3545 !important; box-shadow: 0 0 0 0.2rem rgba(220,53,69,0.25) !important; }
+    #confirmationDetails { border: none; }
+    #confirmationDetails .info-row { display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; border-bottom: 1px solid #e9ecef; }
+    #confirmationDetails .info-row:last-child { border-bottom: none; }
+    #confirmationDetails .info-label { font-weight: 600; color: #495057; margin: 0; font-size: 14px; }
+    #confirmationDetails .info-value { color: #212529; margin: 0; font-size: 14px; }
+    .selected-org-units-table { width: 100%; margin-top: 0.5rem; }
+    .selected-org-units-table th { background-color: #005151; color: white; font-weight: 600; padding: 0.5rem; border: none; font-size: 14px; }
+    .selected-org-units-table td { padding: 0.20rem 0.5rem; border: 1px solid #dee2e6; font-size: 13px; }
+    .selected-org-units-table tbody tr:nth-child(even) { background-color: #f8f9fa; }
+    .selected-org-units-table tbody tr:nth-child(odd) { background-color: #ffffff; }
+    .confirmation-buttons { display: flex; gap: 0.75rem; justify-content: center; margin-top: 0.75rem; }
+    .btn-back { background: #6c757d; border: none; color: white; padding: 0.5rem 1.5rem; border-radius: 50px; font-weight: 600; font-size: 14px; transition: all 0.3s ease; }
+    .btn-back:hover { background: #5a6268; color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    .btn-confirm { background: #005151; border: none; color: white; padding: 0.5rem 1.5rem; border-radius: 50px; font-weight: 600; font-size: 14px; transition: all 0.3s ease; }
+    .btn-confirm:hover { background: #003d3d; color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    .btn-back, .btn-confirm { width: 100px; }
+    .btn-reload { background: #17a2b8; border: none; color: white; padding: 0.5rem 1.5rem; border-radius: 50px; font-weight: 600; font-size: 14px; transition: all 0.3s ease; width: 180px; }
+    .btn-reload:hover { background: #138496; color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    .form-label { margin-bottom: 4px; }
+    button#reloadButton { width: 90%; padding: 12px; font-size: 15px; background: #005151; }
+    input#adjustDateDisplay { width: 100% !important; padding: 12px 16px !important; font-size: 16px !important; border: 2px solid #dee2e6 !important; border-radius: 8px !important; background-color: #fff !important; transition: border-color 0.3s ease !important; cursor: pointer !important; pointer-events: none !important; }
+    input#adjustDateDisplay:focus { border-color: #005151 !important; box-shadow: 0 0 0 0.2rem rgba(0,81,81,0.25) !important; outline: none !important; }
+    .date-input-wrapper { position: relative !important; cursor: pointer !important; }
+    .date-input-wrapper .calendar-icon { font-size: 18px; transition: color 0.3s ease; }
+    .date-input-wrapper:hover .calendar-icon { color: #005151; }
+    input#adjustDate { position: absolute !important; width: 100% !important; height: 100% !important; top: 0 !important; left: 0 !important; cursor: pointer !important; border: none !important; background: transparent !important; opacity: 0 !important; z-index: 25 !important; margin: 0 !important; padding: 0 !important; }
+    input#adjustDate::-webkit-calendar-picker-indicator { position: absolute; right: 0; top: 0; width: 100%; height: 100%; cursor: pointer; opacity: 0; z-index: 30; }
+    input#startAdjust, #endAdjust { text-align: center; }
+    .form-switch .form-check-input { width: 3.5em; height: 1.8em; }
+    .form-check-label { font-size: 16px; }
+    .custom-alert-msg { padding: 6px 6px; font-size: 14px; text-align: center; width: 90%; margin: 0 auto; }
+    .custom-design-status { font-weight: 400 !important; font-size: 14px !important; padding: 20px 20px; background: #d8ffff; border-radius: 5px; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div id="loading" class="mt-3 text-info fw-semibold" style="display:none;">Processing...</div>
+
+    <!-- Adjustment Form Section -->
+    <div id="adjustmentSection" class="section d-none mt-2">
+      <div class="section-header d-none">Submit Adjustment</div>
+      <div class="section-body">
+        <form id="adjustmentForm">
+          <!-- Hidden fields for authentication data -->
+          <input type="hidden" id="personNumber" readonly />
+          <input type="hidden" id="lcProfileId" readonly />
+
+          <div class="mb-2">
+            <label for="adjustDate" class="form-label required">Schedule Date to Adjust</label>
+            <div class="date-input-wrapper position-relative" style="cursor: pointer;">
+              <input type="text" id="adjustDateDisplay" class="form-control" placeholder="Click to Select" readonly style="pointer-events: none;" />
+              <input type="date" id="adjustDate" class="form-control position-absolute" style="opacity: 0; z-index: 25; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer;" />
+              <span class="calendar-icon position-absolute" style="right: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; pointer-events: none; z-index: 10;">📅</span>
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Org Unit(s) to Adjust</label>
+            <div class="mb-2">
+              <input type="text" id="orgUnitSearch" class="form-control" placeholder="Search org units..." />
+            </div>
+            <div class="scroll-table">
+              <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 40px;"></th>
+                    <th>Org Unit(s) to Adjust</th>
+                  </tr>
+                </thead>
+                <tbody id="multiSelectTableBody"></tbody>
+              </table>
+            </div>
+            <div class="form-text">Search and select multiple items.</div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-12">
+
+              <div class="d-flex justify-content-between">
+                <div class="px-2 py-0">
+                  <label class="form-label">Adjust Start (min)</label>
+                  <input type="number" id="startAdjust" class="form-control" value="0" min="0" max="720" step="1" />
+                </div>
+                <div class="px-2 py-0">
+                  <label class="form-label">Adjust End (min)</label>
+                  <input type="number" id="endAdjust" class="form-control" value="0" min="0" max="720" step="1" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-12">
+              <div class="d-flex justify-content-between">
+                <div class="p-2">
+                  <label class="form-label d-none">Start Time Shift</label>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="startTimeSwitch" checked>
+                    <label class="form-check-label" for="startTimeSwitch" id="startTimeSwitchLabel">Later</label>
+                  </div>
+                </div>
+                <div class="p-2">
+                  <label class="form-label d-none">End Time Shift</label>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="endTimeSwitch" checked>
+                    <label class="form-check-label" for="endTimeSwitch" id="endTimeSwitchLabel">Later</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 text-center">
+            <button type="submit" id="btnSubmit" class="btn custom-btn-color">Submit Adjustment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Confirmation Screen -->
+    <div id="confirmationScreen" class="confirmation-screen">
+      <h5 class="text-center mb-2">Confirm Your Information</h5>
+      <div id="confirmationDetails"></div>
+      <div class="confirmation-buttons">
+        <button id="backButton" class="btn btn-back">Back</button>
+        <button id="confirmButton" class="btn btn-confirm">Confirm</button>
+      </div>
+    </div>
+
+    <!-- Response Screen -->
+    <div id="responseScreen" class="confirmation-screen text-center d-none">
+      <div id="responseMessage" class="fw-semibold mb-3">Adjustment submitted successfully!</div>
+      <button id="reloadButton" class="btn btn-reload d-none">Start Another Adjustment</button>
+    </div>
+
+    <div id="result" class="mt-3"></div>
+  </div>
+
+  <script>
+    // Ensure jQuery is loaded before proceeding
+    function startApplication() {
+      if (typeof $ === 'undefined' || typeof jQuery === 'undefined') {
+        // console.error('jQuery is not loaded. Retrying in 100ms...');
+        setTimeout(startApplication, 100);
+        return;
+      }
+      
+      $(document).ready(function () {
+
+      // Prevent typing negative sign (-) and decimal (.)
+      $("#startAdjust, #endAdjust").on("keydown", function (e) {
+        if (e.key === "-" || e.key === ".") {
+          e.preventDefault();
+        }
+      });
+
+      // Automatically remove leading zeros (e.g., 05 -> 5, 01 -> 1)
+      $("#startAdjust, #endAdjust").on("input", function () {
+        this.value = this.value.replace(/^0+/, '') || '0';
+        
+        // Check if value exceeds 720 and reset to 720 with error message
+        const currentValue = parseInt(this.value);
+        const fieldId = '#' + this.id;
+        
+        if (currentValue > 720) {
+          this.value = '720';
+          showFieldError(fieldId, 'Max Value is 720');
+        } else {
+          // Clear error message if value is valid
+          clearFieldError(fieldId);
+        }
+      });
+
+      // Also check on blur to catch paste operations
+      $("#startAdjust, #endAdjust").on("blur", function () {
+        const currentValue = parseInt(this.value);
+        const fieldId = '#' + this.id;
+        
+        if (currentValue > 720) {
+          this.value = '720';
+          showFieldError(fieldId, 'Max Value is 720');
+        } else {
+          clearFieldError(fieldId);
+        }
+      });
+
+      // console.log("Application initialized");
+
+      // AUTHENTICATION START
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+
+      if (code) {
+        // console.log("Auth code found:", code);
+
+        var settings = {
+          "url": "https://api-tyson.cloudapper.com/api/v3/hook?identifier=de90363e40824dfd96acbe7e9c50b7ce",
+          "method": "POST",
+          "timeout": 0,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          data: JSON.stringify({
+            code: code
+          }),
+          processData: false,
+        };
+
+        $.ajax(settings).done(function (response) {
+          // console.log("Authentication API Response:", response);
+
+          // Extract authentication data
+          if (response && response.person_number && response.lc_profile_id) {
+            // console.log("Storing authentication data:");
+            // console.log("   - person_number:", response.person_number);
+            // console.log("   - lc_profile_id:", response.lc_profile_id);
+
+            // Store in hidden fields
+            $("#personNumber").val(response.person_number);
+            $("#lcProfileId").val(response.lc_profile_id);
+
+            // Initialize the application with the lc_profile_id
+            initializeAppWithAuth(response.lc_profile_id);
+          } else {
+            // console.error("Missing required authentication data in response");
+            showError("Authentication failed: Missing required data");
+          }
+        }).fail(function (xhr, status, error) {
+          // console.error("Authentication API Error:", {
+          //   status: xhr.status,
+          //   statusText: xhr.statusText,
+          //   error: error,
+          //   response: xhr.responseText
+          // });
+          showError("Authentication failed. Please try again.");
+        });
+
+      } else {
+        // console.log("No auth code found, redirecting to authentication");
+        const clientId = "386c3e35-2a29-4051-bb0b-989df2ac229a";
+        const redirectUri = "https://form-tyson.cloudapper.com/app_files/shift-timing-adjustment-tst-org-template.html";
+        const authUrl = `https://tysonsharedsvcs.prd.mykronos.com/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+        // console.log("Redirecting to:", authUrl);
+        window.location.href = authUrl;
+      }
+      // AUTHENTICATION END
+
+      const API_URL = "https://api-tyson.cloudapper.com/api/v3/hook/fetch-records";
+
+      // Initialize native date input with timezone-safe date range restrictions
+      // Use local timezone for date range but ensure consistent formatting
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const lastSunday = new Date(today);
+      lastSunday.setDate(today.getDate() - dayOfWeek - 7);
+
+      // Format dates for HTML date input (YYYY-MM-DD) - this ensures consistent YYYY-MM-DD format
+      const formatDateSafe = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      // Set date input attributes - keep today as max date for Dhaka timezone compatibility
+      const dateInput = $("#adjustDate");
+      const dateDisplayInput = $("#adjustDateDisplay");
+      dateInput.attr("min", formatDateSafe(lastSunday));
+      dateInput.attr("max", formatDateSafe(today));
+
+      // console.log(`Date range set: ${formatDateSafe(lastSunday)} to ${formatDateSafe(today)}, field starts empty`);
+      // console.log(`User timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+
+      // Custom date input functionality
+      function setupCustomDateInput() {
+        let preservedDate = null; // Store the selected date to preserve it during navigation
+        
+        // Simple click handler for the wrapper - let the native date input handle everything
+        $(".date-input-wrapper").on("click", function(e) {
+          const dateInput = document.getElementById('adjustDate');
+          if (dateInput && e.target !== dateInput) {
+            dateInput.focus();
+            dateInput.click();
+            // console.log("Date wrapper clicked - triggering native date picker");
+          }
+        });
+
+        // Ensure the native date input works properly
+        $("#adjustDate").on("click", function(e) {
+          e.stopPropagation();
+          // console.log("Native date input clicked");
+        });
+
+        // Store the current date before any potential changes
+        $("#adjustDate").on("focus", function() {
+          preservedDate = $(this).val();
+          // console.log(`Date input focused, preserving date: ${preservedDate}`);
+        });
+
+        // Monitor for unwanted date changes during month navigation
+        $("#adjustDate").on("input", function() {
+          const currentValue = $(this).val();
+          
+          // If we had a preserved date and the current value is different and not empty
+          if (preservedDate && currentValue && currentValue !== preservedDate) {
+            // Check if this might be an unwanted change during navigation
+            const preservedDateObj = new Date(preservedDate);
+            const currentDateObj = new Date(currentValue);
+            
+            // If the dates are in different months but the day is the same,
+            // it might be an unwanted navigation change
+            if (preservedDateObj.getDate() === currentDateObj.getDate() &&
+                (preservedDateObj.getMonth() !== currentDateObj.getMonth() ||
+                 preservedDateObj.getFullYear() !== currentDateObj.getFullYear())) {
+              
+              // Restore the preserved date
+              $(this).val(preservedDate);
+              // console.log(`Restored preserved date during navigation: ${preservedDate}`);
+              return;
+            }
+          }
+        });
+
+        // Handle date selection with consistent formatting
+        $("#adjustDate").on("change", function() {
+          const selectedDate = $(this).val();
+          if (selectedDate) {
+            // Update the preserved date with the new selection
+            preservedDate = selectedDate;
+            
+            // Parse the date string (YYYY-MM-DD) and create a date object
+            // Use local timezone but be careful about date interpretation
+            const dateParts = selectedDate.split('-');
+            const year = parseInt(dateParts[0]);
+            const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
+            const day = parseInt(dateParts[2]);
+            
+            // Create date object at noon local time to avoid timezone edge cases
+            const dateObj = new Date(year, month, day, 12, 0, 0);
+            
+            // Format date for display
+            const formattedDate = dateObj.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            });
+            
+            $("#adjustDateDisplay").val(formattedDate);
+            $("#adjustDateDisplay").removeClass('text-muted');
+            // console.log(`Date selected: ${selectedDate} (displayed as: ${formattedDate})`);
+          } else {
+            $("#adjustDateDisplay").val("");
+            $("#adjustDateDisplay").addClass('text-muted');
+            preservedDate = null;
+            // console.log(`Date cleared`);
+          }
+        });
+
+        // Handle clearing the date when display input is focused and cleared
+        $("#adjustDateDisplay").on("keydown", function(e) {
+          if (e.key === "Delete" || e.key === "Backspace") {
+            $("#adjustDate").val("");
+            $("#adjustDateDisplay").val("");
+            $("#adjustDateDisplay").attr("placeholder", "Click to Select");
+            preservedDate = null;
+            // console.log(`Date manually cleared`);
+          }
+        });
+      }
+
+      // Initialize custom date input
+      setupCustomDateInput();
+
+      // Fetch org units using lc_profile_id from authentication
+      function fetchOrgUnits(lcProfileId) {
+        // console.log(`Fetching org units for lc_profile_id: ${lcProfileId}`);
+        const payload = {
+          "StartRow": 0,
+          "TotalRows": 5000,
+          "TypeId": "e25ddaee-2be5-42f8-a856-691f299d26a7",
+          "MenuId": "973deacd-382b-4415-885f-b7dd55756884",
+          "FormViewId": "65da795e-a2ef-4c4f-bccf-a3020ee2cc9d",
+          "FilterConfigurations": [{
+            "Condition": "AND",
+            "Rules": [{
+              "Field": "stringField3",
+              "Operator": "=",
+              "Value": lcProfileId,
+              "TypeId": "e25ddaee-2be5-42f8-a856-691f299d26a7"
+            }]
+          }],
+          "SortConfigurations": [],
+          "Text": ""
+        };
+        return $.ajax({
+          url: API_URL,
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-CA-Identifier": "4l3a7ivlQvioVgAAaR8pnQ" },
+          data: JSON.stringify(payload)
+        });
+      }
+
+      // Show error message under field
+      function showFieldError(fieldId, message) {
+        // console.log(`Field error for ${fieldId}: ${message}`);
+        const $field = $(fieldId);
+        $field.addClass('error-field');
+
+        // Remove existing error message
+        $field.next('.error-message').remove();
+
+        // Add new error message
+        $field.after(`<div class="error-message">${message}</div>`);
+        $field.focus();
+      }
+
+      // Clear field error
+      function clearFieldError(fieldId) {
+        const $field = $(fieldId);
+        $field.removeClass('error-field');
+        $field.next('.error-message').remove();
+      }
+
+      // Clear all field errors
+      function clearAllFieldErrors() {
+        // console.log("Clearing all field errors");
+        $('.error-field').removeClass('error-field');
+        $('.error-message').remove();
+      }
+
+      function showWarning(msg) {
+        // console.log(`Warning: ${msg}`);
+        $("#loading").hide();
+        $("#result").html(`<div class="alert alert-warning">${msg}</div>`);
+      }
+
+      function showError(msg) {
+        // console.log(`Error: ${msg}`);
+        $("#loading").hide();
+        $("#result").html(`<div class="alert alert-danger custom-alert-msg">${msg}</div>`);
+      }
+
+      function populateMultiSelect(items) {
+        // console.log(`Populating multi-select with ${items.length} items`);
+        const $tbody = $("#multiSelectTableBody");
+        $tbody.empty();
+        items.forEach(item => {
+          if (item.stringField1) {
+            const safeValue = item.stringField1.replace(/"/g, '&quot;');
+            $tbody.append(`
+              <tr>
+                <td><input type="checkbox" class="form-check-input record-check" value="${safeValue}"></td>
+                <td>${item.stringField1}</td>
+              </tr>
+            `);
+          }
+        });
+      }
+
+      // Initialize application with lc_profile_id from authentication
+      async function initializeAppWithAuth(lcProfileId) {
+        // console.log("Initializing application...");
+
+        if (!lcProfileId) {
+          // console.log("No lc_profile_id provided");
+          showError("Authentication data missing");
+          return;
+        }
+
+        $("#loading").show().text("Loading org units...");
+
+        try {
+          // Fetch org units using lc_profile_id from authentication
+          // console.log(`Fetching org units for lc_profile_id: ${lcProfileId}`);
+          const orgUnitsResp = await fetchOrgUnits(lcProfileId);
+          // console.log("Org units response:", orgUnitsResp);
+
+          const items = orgUnitsResp?.Result?.Items || [];
+          if (items.length > 0) {
+            // console.log(`Found ${items.length} org units`);
+            populateMultiSelect(items);
+            $("#adjustmentSection").removeClass("d-none");
+            $("#loading").hide();
+          } else {
+            showWarning(`No org units found for profile ID: <b>${lcProfileId}</b>`);
+          }
+        } catch (err) {
+          // console.error("Error during initialization:", err);
+          showError(`Error loading org units: ${err.statusText || err.message}`);
+        }
+      }
+
+      // Submit Adjustment
+      $("#adjustmentForm").on("submit", function (event) {
+        event.preventDefault();
+        // console.log("Form submission started");
+
+        clearAllFieldErrors();
+
+        const adjustDate = $("#adjustDate").val();
+        const startAdjust = $("#startAdjust").val();
+        const endAdjust = $("#endAdjust").val();
+        const startTimeSwitch = $("#startTimeSwitch").prop("checked");
+        const endTimeSwitch = $("#endTimeSwitch").prop("checked");
+
+        const selectedItems = [];
+        $("input.record-check:checked").each(function () {
+          selectedItems.push($(this).val());
+        });
+
+        // console.log("Form data:", {
+        //   adjustDate,
+        //   startAdjust,
+        //   endAdjust,
+        //   startTimeSwitch: startTimeSwitch ? "Later" : "Earlier",
+        //   endTimeSwitch: endTimeSwitch ? "Later" : "Earlier",
+        //   selectedItemsCount: selectedItems.length
+        // });
+
+        // Clear all previous validation messages first
+        $("#result").empty();
+        
+        // Validation with field-specific errors (prioritized by field order in form)
+        // Check date first - if it fails, return immediately
+        if (!adjustDate || adjustDate.trim() === '') {
+          showError("Please select a date.");
+          // console.log("Form validation failed - missing date");
+          return;
+        }
+
+        // Check org unit selection
+        if (selectedItems.length === 0) {
+          showError("Please select at least one org unit from the list above.");
+          // console.log("Form validation failed - no org units selected");
+          return;
+        }
+
+        // Check adjustment values
+        if (parseInt(startAdjust) === 0 && parseInt(endAdjust) === 0) {
+          showError("Please set at least one adjustment value.");
+          // console.log("Form validation failed - no adjustment values");
+          return;
+        }
+
+        // console.log("Form validation passed");
+
+        // Hide form, show confirmation
+        $("#adjustmentSection").hide();
+        $("#confirmationScreen").show();
+
+        $("#confirmationDetails").html(`
+          <div class="info-row">
+            <p class="info-label">Schedule Date:</p>
+            <p class="info-value">${adjustDate}</p>
+          </div>
+          <div class="info-row">
+            <p class="info-label">Start Time Adjustment:</p>
+            <p class="info-value">${startAdjust} (${startTimeSwitch ? "Later" : "Earlier"})</p>
+          </div>
+          <div class="info-row">
+            <p class="info-label">End Time Adjustment:</p>
+            <p class="info-value">${endAdjust} (${endTimeSwitch ? "Later" : "Earlier"})</p>
+          </div>
+          <div class="info-row">
+            <p class="info-label">Selected Org Units:</p>
+            <p class="info-value">${selectedItems.length} item(s) selected</p>
+          </div>
+          <table class="table selected-org-units-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Org Unit</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${selectedItems.map((item, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${item}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `);
+      });
+
+      // Back Button
+      $("#backButton").on("click", function () {
+        // console.log("Back button clicked");
+        $("#confirmationScreen").hide();
+        $("#adjustmentSection").show();
+      });
+
+      // Confirm Button
+      $("#confirmButton").on("click", function () {
+        // console.log("Confirm button clicked");
+
+        // Disable the button immediately to prevent double clicks
+        const $confirmButton = $(this);
+        $confirmButton.prop("disabled", true);
+        $confirmButton.text("Sending...");
+
+        const adjustDate = $("#adjustDate").val();
+        const startAdjust = $("#startAdjust").val();
+        const endAdjust = $("#endAdjust").val();
+        const startTimeSwitch = $("#startTimeSwitch").prop("checked");
+        const endTimeSwitch = $("#endTimeSwitch").prop("checked");
+
+        const selectedItems = [];
+        $("input.record-check:checked").each(function () {
+          selectedItems.push($(this).val());
+        });
+
+        if (!adjustDate || selectedItems.length === 0) {
+          // console.log("Missing required data for submission");
+          showError("Missing required data.");
+          // Re-enable button if validation fails
+          $confirmButton.prop("disabled", false);
+          $confirmButton.text("Confirm");
+          return;
+        }
+
+        // Get authentication data from hidden fields
+        const personNumber = $("#personNumber").val();
+        const lcProfileId = $("#lcProfileId").val();
+
+        // console.log("Using authentication data for submission:");
+        // console.log("   - person_number:", personNumber);
+        // console.log("   - lc_profile_id:", lcProfileId);
+
+        // Prepare payload
+        const webhookData = {
+          "person_number": personNumber,
+          "employee_id": lcProfileId,
+          "scheduled_shift_date": adjustDate,
+          "select_org_units": selectedItems.map(item => ({ "key": item })),
+          "start_shift_type": startTimeSwitch ? "Later" : "Earlier",
+          "start_shift_adjustment": startAdjust,
+          "end_shift_type": endTimeSwitch ? "Later" : "Earlier",
+          "end_shift_adjustment": endAdjust
+        };
+
+        // console.log("Webhook payload:", webhookData);
+
+        // Show "Sending..." message under the form (don't hide form yet)
+        $("#loading").show().text("Sending...");
+
+        // Send data to API and handle response with timeout
+        var settings = {
+          "url": "https://api-tyson.cloudapper.com/api/v3/hook?identifier=e601a4481ecc4267a43fe4e529b878c0",
+          "method": "POST",
+          "timeout": 0,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "data": JSON.stringify(webhookData),
+        };
+
+        let responseReceived = false;
+        let countdownInterval;
+        let countdown = 7;
+
+        // Start countdown display
+        $("#loading").show().html(`Processing... <span id="countdown">${countdown}</span> seconds remaining`);
+        
+        countdownInterval = setInterval(function() {
+          countdown--;
+          $("#countdown").text(countdown);
+          
+          if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            if (!responseReceived) {
+              // No failure response received within 7 seconds, show success
+              $("#loading").hide();
+              $("#confirmationScreen").hide();
+              $("#responseScreen").removeClass("d-none").show();
+              $("#responseMessage").removeClass("custom-design-status").html("Adjustment submitted successfully!");
+              $("#reloadButton").removeClass("d-none");
+              
+              // console.log("No failure response within 7 seconds - showing success");
+            }
+          }
+        }, 1000);
+
+        $.ajax(settings).done(function (response) {
+          responseReceived = true;
+          clearInterval(countdownInterval);
+          console.log("API Response:", response);
+          console.log("Response type:", typeof response);
+          
+          // Parse response if it's a string
+          let parsedResponse = response;
+          if (typeof response === 'string') {
+            try {
+              // Clean the response string before parsing
+              let cleanResponse = response.trim();
+              // Remove any trailing spaces after property values
+              cleanResponse = cleanResponse.replace(/"\s+,/g, '",').replace(/"\s+}/g, '"}');
+              parsedResponse = JSON.parse(cleanResponse);
+              console.log("Parsed response:", parsedResponse);
+            } catch (e) {
+              console.log("Failed to parse response as JSON:", e);
+              console.log("Raw response string:", JSON.stringify(response));
+              
+              // Try to extract status using regex as fallback
+              const statusMatch = response.match(/"status"\s*:\s*"([^"]+)"/);
+              if (statusMatch && statusMatch[1] === "failure") {
+                // Extract other fields using regex
+                const message1Match = response.match(/"message_1"\s*:\s*"([^"]+)"/);
+                const orgUnitMatch = response.match(/"org_unit"\s*:\s*"([^"]+)"/);
+                const dateMatch = response.match(/"date"\s*:\s*([^,}]+)/);
+                const message2Match = response.match(/"message_2"\s*:\s*"([^"]+)"/);
+                const message3Match = response.match(/"message_3"\s*:\s*"([^"]+)"/);
+                
+                parsedResponse = {
+                  status: "failure",
+                  message_1: message1Match ? message1Match[1] : "",
+                  org_unit: orgUnitMatch ? orgUnitMatch[1].trim() : "",
+                  date: dateMatch ? dateMatch[1].trim() : "",
+                  message_2: message2Match ? message2Match[1] : "",
+                  message_3: message3Match ? message3Match[1] : ""
+                };
+                console.log("Regex parsed response:", parsedResponse);
+              } else {
+                parsedResponse = response;
+              }
+            }
+          }
+          
+          $("#loading").hide();
+          $("#confirmationScreen").hide();
+          $("#responseScreen").removeClass("d-none").show();
+          
+          // Check the status field in the response body (not HTTP status)
+          console.log("Checking response status:", parsedResponse.status, "Type:", typeof parsedResponse.status);
+          if (parsedResponse && parsedResponse.status === "failure") {
+            // Show failure message with detailed response structure
+            let failureMessage = '';
+            
+            if (parsedResponse.message_1) {
+              failureMessage += parsedResponse.message_1 + '<br>';
+            }
+            if (parsedResponse.org_unit) {
+              failureMessage += '<strong>' + parsedResponse.org_unit + '</strong><br>';
+            }
+            if (parsedResponse.date) {
+              failureMessage += 'Date: ' + parsedResponse.date + '<br>';
+            }
+            if (parsedResponse.message_2) {
+              failureMessage += parsedResponse.message_2 + '<br>';
+            }
+            if (parsedResponse.message_3) {
+              failureMessage += parsedResponse.message_3;
+            }
+            
+            // If no structured message, fall back to generic message
+            if (!failureMessage && parsedResponse.message) {
+              failureMessage = parsedResponse.message;
+            }
+            
+            $("#responseMessage").addClass("custom-design-status").html(failureMessage);
+            $("#reloadButton").removeClass("d-none");
+            console.log("Failure response received:", parsedResponse);
+          } else {
+            // Show success message - this happens when status is not "failure" or no status field
+            $("#responseMessage").removeClass("custom-design-status").html("Adjustment submitted successfully!");
+            $("#reloadButton").removeClass("d-none");
+            console.log("Success response received:", parsedResponse);
+          }
+        }).fail(function (xhr, status, error) {
+          responseReceived = true;
+          clearInterval(countdownInterval);
+          console.error("API Error:", {
+            status: xhr.status,
+            statusText: xhr.statusText,
+            error: error,
+            response: xhr.responseText
+          });
+          
+          $("#loading").hide();
+          $("#confirmationScreen").hide();
+          $("#responseScreen").removeClass("d-none").show();
+          $("#responseMessage").addClass("custom-design-status").html("An error occurred while processing your request.");
+          $("#reloadButton").removeClass("d-none");
+        });
+      });
+
+
+      // Handle switch toggle behavior
+      $("#startTimeSwitch").on("change", function () {
+        const isChecked = $(this).prop("checked");
+        const label = isChecked ? "Later" : "Earlier";
+        $("#startTimeSwitchLabel").text(label);
+        // console.log(`Start time switch changed to: ${label} (${isChecked ? "Later" : "Earlier"})`);
+      });
+
+      $("#endTimeSwitch").on("change", function () {
+        const isChecked = $(this).prop("checked");
+        const label = isChecked ? "Later" : "Earlier";
+        $("#endTimeSwitchLabel").text(label);
+        // console.log(`End time switch changed to: ${label} (${isChecked ? "Later" : "Earlier"})`);
+      });
+
+      // Handle org unit search functionality
+      $("#orgUnitSearch").on("input", function () {
+        const searchTerm = $(this).val().toLowerCase().trim();
+        // console.log(`Searching org units for: "${searchTerm}"`);
+
+        $("#multiSelectTableBody tr").each(function () {
+          const orgUnitText = $(this).find("td:last-child").text().toLowerCase();
+          const isMatch = orgUnitText.includes(searchTerm);
+
+          if (isMatch || searchTerm === "") {
+            $(this).show();
+          } else {
+            $(this).hide();
+          }
+        });
+
+        // Count visible rows
+        const visibleRows = $("#multiSelectTableBody tr:visible").length;
+        // console.log(`Search results: ${visibleRows} org units found`);
+      });
+
+      // Auto-hide validation messages when user makes valid changes
+      function setupValidationAutoHide() {
+        // Hide validation when org units are selected
+        $(document).on('change', '#multiSelectTableBody input[type="checkbox"]', function() {
+          const selectedItems = $("#multiSelectTableBody input[type='checkbox']:checked");
+          const startAdjust = parseInt($("#startAdjust").val()) || 0;
+          const endAdjust = parseInt($("#endAdjust").val()) || 0;
+          
+          if (selectedItems.length > 0 && (startAdjust > 0 || endAdjust > 0)) {
+            $("#result").empty();
+          }
+        });
+
+        // Hide validation when adjustment values change
+        $("#startAdjust, #endAdjust").on('input change', function() {
+          const selectedItems = $("#multiSelectTableBody input[type='checkbox']:checked");
+          const startAdjust = parseInt($("#startAdjust").val()) || 0;
+          const endAdjust = parseInt($("#endAdjust").val()) || 0;
+          
+          if (selectedItems.length > 0 && (startAdjust > 0 || endAdjust > 0)) {
+            $("#result").empty();
+          }
+        });
+
+        // Hide validation when date is selected
+        $("#adjustDate").on('change', function() {
+          if ($(this).val()) {
+            // Clear validation messages when date is selected
+            $("#result").empty();
+          }
+        });
+      }
+
+      // Initialize validation auto-hide functionality
+      setupValidationAutoHide();
+
+      // Reload Button functionality
+      $("#reloadButton").on("click", function () {
+        // console.log("Reload button clicked - clearing URL parameters and restarting authentication");
+        
+        // Get the current URL without query parameters
+        const baseUrl = window.location.origin + window.location.pathname;
+        // console.log("Redirecting to clean URL:", baseUrl);
+        
+        // Redirect to clean URL to restart authentication process
+        window.location.href = baseUrl;
+      });
+
+      // Application will be initialized after successful authentication
+      });
+    }
+    
+    // Start the application
+    startApplication();
+  </script>
+</body>
+
+</html>
